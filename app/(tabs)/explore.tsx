@@ -163,7 +163,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   saveButton: {
-    marginTop: 20,
+    position: "absolute",
+    marginTop: 0,
     backgroundColor: "#e74c3c",
     paddingVertical: 10,
     paddingHorizontal: 20,
