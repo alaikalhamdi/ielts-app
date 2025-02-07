@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, StyleSheet, Button } from "react-native";
 import Flashcard from "@/components/Flashcard";
+import { ThemedView } from "@/components/ThemedView";
 
 const flashcards = [
   { question: "What is a noun?", answer: "A noun is a person, place, or thing." },
@@ -16,13 +17,13 @@ export default function IndexScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container} lightColor="#D0D0D0" darkColor="#333333">
       <Flashcard 
         question={flashcards[currentIndex].question} 
         answer={flashcards[currentIndex].answer} 
       />
       <Button title="Next" onPress={nextFlashcard} />
-    </View>
+    </ThemedView>
   );
 }
 
@@ -31,6 +32,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
   },
 });

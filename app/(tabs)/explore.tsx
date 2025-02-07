@@ -1,109 +1,211 @@
-import { StyleSheet, Image, Platform } from 'react-native';
+import { useState, useRef, useEffect } from "react";
+import { 
+  View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Animated, Easing, FlatList
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { ThemedView } from "@/components/ThemedView";
 
-export default function TabTwoScreen() {
+const API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/";
+
+export default function ExploreScreen() {
+  const [word, setWord] = useState("");
+  const [definition, setDefinition] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [flipped, setFlipped] = useState(false);
+  const [savedWords, setSavedWords] = useState<string[]>([]);
+
+  const flipAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    loadSavedWords();
+  }, []);
+
+  const fetchDefinition = async () => {
+    if (!word.trim()) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}${word}`);
+      const data = await response.json();
+      if (data[0]?.meanings[0]?.definitions[0]?.definition) {
+        setDefinition(data[0].meanings[0].definitions[0].definition);
+        setFlipped(false);
+      } else {
+        setDefinition("Definition not found.");
+      }
+    } catch (error) {
+      setDefinition("Error fetching definition.");
+    }
+    setLoading(false);
+  };
+
+  const flipCard = () => {
+    Animated.timing(flipAnim, {
+      toValue: flipped ? 0 : 1,
+      duration: 400,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }).start();
+    setFlipped(!flipped);
+  };
+
+  const saveWord = async () => {
+    if (!word || savedWords.includes(word)) return;
+    const newSavedWords = [...savedWords, word];
+    setSavedWords(newSavedWords);
+    await AsyncStorage.setItem("savedWords", JSON.stringify(newSavedWords));
+  };
+
+  const loadSavedWords = async () => {
+    const storedWords = await AsyncStorage.getItem("savedWords");
+    if (storedWords) {
+      setSavedWords(JSON.parse(storedWords));
+    }
+  };
+
+  const frontInterpolate = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+
+  const backInterpolate = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["180deg", "360deg"],
+  });
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <ThemedView style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter a word..."
+        value={word}
+        onChangeText={setWord}
+        onSubmitEditing={fetchDefinition}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={fetchDefinition}>
+        <Text style={styles.buttonText}>Search</Text>
+      </TouchableOpacity>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#3498db" />
+      ) : definition ? (
+        <View style={styles.cardContainer}>
+          <Animated.View style={[styles.card, { transform: [{ rotateY: frontInterpolate }] }]}>
+            <TouchableOpacity onPress={flipCard} activeOpacity={0.8}>
+              <Text style={styles.text}>{word}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View style={[styles.card, styles.cardBack, { transform: [{ rotateY: backInterpolate }] }]}>
+            <TouchableOpacity onPress={flipCard} activeOpacity={0.8}>
+              <Text style={styles.text}>{definition}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <TouchableOpacity style={styles.saveButton} onPress={saveWord}>
+            <Text style={styles.saveButtonText}>Save Word</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      <Text style={styles.savedTitle}>Saved Words</Text>
+      <FlatList
+        data={savedWords}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.savedWord}>
+            <Text style={styles.savedText}>{item}</Text>
+          </View>
+        )}
+      />
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    padding: 20,
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  input: {
+    width: "80%",
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    marginBottom: 15,
+    fontSize: 18,
+    textAlign: "center",
+    backgroundColor: "#fff",
+  },
+  button: {
+    backgroundColor: "#2ecc71",
+    paddingVertical: 14,
+    paddingHorizontal: 25,
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+  buttonText: {
+    fontSize: 18,
+    color: "white",
+    fontWeight: "bold",
+  },
+  cardContainer: {
+    width: "80%",
+    height: 200,
+    position: "relative",
+  },
+  card: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
+    backgroundColor: "#3498db",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    backfaceVisibility: "hidden",
+  },
+  cardBack: {
+    backgroundColor: "#2ecc71",
+  },
+  text: {
+    fontSize: 24,
+    color: "white",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  saveButton: {
+    marginTop: 20,
+    backgroundColor: "#e74c3c",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  saveButtonText: {
+    fontSize: 18,
+    color: "white",
+    fontWeight: "bold",
+  },
+  savedTitle: {
+    marginTop: 30,
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  savedWord: {
+    backgroundColor: "#fff",
+    padding: 10,
+    marginVertical: 5,
+    borderRadius: 8,
+    width: "80%",
+    alignItems: "center",
+  },
+  savedText: {
+    fontSize: 18,
+    color: "#333",
   },
 });
