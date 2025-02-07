@@ -17,10 +17,6 @@ export default function ExploreScreen() {
 
   const flipAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    loadSavedWords();
-  }, []);
-
   const fetchDefinition = async () => {
     if (!word.trim()) return;
     setLoading(true);
@@ -49,19 +45,19 @@ export default function ExploreScreen() {
     setFlipped(!flipped);
   };
 
-  const saveWord = async () => {
-    if (!word || savedWords.includes(word)) return;
-    const newSavedWords = [...savedWords, word];
-    setSavedWords(newSavedWords);
-    await AsyncStorage.setItem("savedWords", JSON.stringify(newSavedWords));
-  };
-
-  const loadSavedWords = async () => {
-    const storedWords = await AsyncStorage.getItem("savedWords");
-    if (storedWords) {
-      setSavedWords(JSON.parse(storedWords));
+  const saveWord = async (word: string) => {
+    try {
+      const existingWords = await AsyncStorage.getItem("savedWords");
+      const wordsArray = existingWords ? JSON.parse(existingWords) : [];
+      if (!wordsArray.includes(word)) {
+        wordsArray.push(word);
+        await AsyncStorage.setItem("savedWords", JSON.stringify(wordsArray));
+      }
+    } catch (error) {
+      console.error("Error saving word:", error);
     }
   };
+  
 
   const frontInterpolate = flipAnim.interpolate({
     inputRange: [0, 1],
@@ -103,22 +99,11 @@ export default function ExploreScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          <TouchableOpacity style={styles.saveButton} onPress={saveWord}>
-            <Text style={styles.saveButtonText}>Save Word</Text>
+          <TouchableOpacity style={styles.saveButton} onPress={() => saveWord(word)}>
+            <Text>Save</Text>
           </TouchableOpacity>
         </View>
       ) : null}
-
-      <Text style={styles.savedTitle}>Saved Words</Text>
-      <FlatList
-        data={savedWords}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.savedWord}>
-            <Text style={styles.savedText}>{item}</Text>
-          </View>
-        )}
-      />
     </ThemedView>
   );
 }
