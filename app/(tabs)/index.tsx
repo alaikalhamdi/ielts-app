@@ -17,7 +17,7 @@ export default function IndexScreen() {
   };
 
   return (
-    <ThemedView style={styles.container} lightColor="#D0D0D0" darkColor="#333333">
+    <ThemedView style={styles.container}>
       <Flashcard 
         question={flashcards[currentIndex].question} 
         answer={flashcards[currentIndex].answer} 
