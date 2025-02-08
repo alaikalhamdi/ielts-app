@@ -9,6 +9,8 @@ export type ThemedTouchableOpacityProps = TouchableOpacityProps & {
 };
 
 export function ThemedTouchableOpacity({ style, lightColor, darkColor, onPress, ...otherProps }: ThemedTouchableOpacityProps) {
+  lightColor = lightColor ?? "#D0D0D0";
+  darkColor = darkColor ?? "#333333";
   const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
 
   return <TouchableOpacity style={[{ backgroundColor }, style]} onPress={onPress} {...otherProps} />;
